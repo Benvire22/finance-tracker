@@ -41,7 +41,9 @@ export const editCategory = createAsyncThunk<void, EditCategoryArg, { state: Roo
 export const deleteCategory = createAsyncThunk<void, string, { state: RootState }>(
   'finance/deleteCategory',
   async (id) => {
-    await axiosApi.delete(`/categories/${id}.json`);
+    if (confirm("Do you really want to delete this category?")) {
+      await axiosApi.delete(`/categories/${id}.json`);
+    }
   },
 );
 
@@ -63,11 +65,9 @@ export const fetchTransaction = createAsyncThunk<Transaction[], void, { state: R
 
     const categories = thunkAPI.getState().finance.categories;
 
-
     const array: Transaction[] = [];
     Object.keys(apiTransactions).map(id => {
       const transaction = apiTransactions[id];
-      console.log(transaction);
       for (const category of categories) {
         if (category.id === transaction.category) {
           array.push({
@@ -77,11 +77,21 @@ export const fetchTransaction = createAsyncThunk<Transaction[], void, { state: R
              type: category.type,
              categoryId: category.id,
            });
-          console.log(1);
         }
       }
     });
-    console.log('array', array);
     return array;
   },
+);
+
+interface editTransactionArg {
+  transaction: ApiTransaction;
+  id: string;
+}
+
+export const editTransaction = createAsyncThunk<void, editTransactionArg, {state: RootState}>(
+  'finance/editTransaction',
+  async ({transaction, id }) => {
+    await axiosApi.put(`/transactions/${id}.json`, transaction);
+  }
 );

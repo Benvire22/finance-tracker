@@ -4,12 +4,13 @@ import {
   addTransaction,
   createCategory,
   deleteCategory,
-  editCategory,
+  editCategory, editTransaction,
   fetchCategories,
   fetchTransaction
 } from './financeThunks';
 
 export interface FinanceState {
+  totalSum: number;
   categories: Category[];
   fetchCategoryLoading: boolean;
   transactions: Transaction[],
@@ -20,14 +21,18 @@ export interface FinanceState {
   currentCategory: Category | null;
   showTransactionModal: boolean;
   selectedCategories: Category[];
+  currentTransaction: Transaction | null;
   createTransactionLoad: boolean;
   fetchTransactionLoading: boolean;
+  editTransactionLoading: boolean;
 }
 
 export const initialState: FinanceState = {
+  totalSum: 0,
   categories: [],
   transactions: [],
   currentCategory: null,
+  currentTransaction: null,
   editCategoryLoading: false,
   fetchCategoryLoading: false,
   deleteLoading: false,
@@ -37,12 +42,21 @@ export const initialState: FinanceState = {
   selectedCategories: [],
   createTransactionLoad: false,
   fetchTransactionLoading: false,
+  editTransactionLoading: false,
 };
 
 export const financeSlice = createSlice({
-  name: "finance",
+  name: 'finance',
   initialState,
   reducers: {
+    changeTotalSum: (state, {payload: sum}: PayloadAction<number>) => {
+      if (sum > 0) {
+        state.totalSum = sum;
+      } else {
+        state.totalSum = 0;
+      }
+    },
+
     showCategoriesModal: (state) => {
       state.showCategoryModal = true;
     },
@@ -58,7 +72,7 @@ export const financeSlice = createSlice({
 
     closeTransactionModal: (state) => {
       state.showTransactionModal = false;
-      // state.currentCategory = null;
+      state.currentTransaction = null;
     },
 
     clearCurrentCategory: (state) => {
@@ -72,6 +86,10 @@ export const financeSlice = createSlice({
     getSelectedCategories: (state, {payload: type}: PayloadAction<string>) => {
       state.selectedCategories = state.categories.filter((category) => category.type === type);
     },
+
+    getCurrentTransaction: (state, {payload: transaction}: PayloadAction<Transaction>) => {
+      state.currentTransaction = transaction;
+    }
 
   },
   extraReducers: (builder) => {
@@ -124,6 +142,14 @@ export const financeSlice = createSlice({
     }).addCase(fetchTransaction.rejected, (state) => {
       state.fetchTransactionLoading = false;
     });
+
+    builder.addCase(editTransaction.pending, (state) => {
+      state.editTransactionLoading = true;
+    }).addCase(editTransaction.fulfilled, (state) => {
+      state.editTransactionLoading = false;
+    }).addCase(editTransaction.rejected, (state) => {
+      state.editTransactionLoading = false;
+    });
   },
   selectors: {
     selectCategories: (state) => state.categories,
@@ -137,6 +163,9 @@ export const financeSlice = createSlice({
     selectSelectedCategories: (state) => state.selectedCategories,
     selectCreateTransaction: (state) => state.createTransactionLoad,
     selectTransactions: (state) => state.transactions,
+    selectCurrentTransaction: (state) => state.currentTransaction,
+    selectTotalSum: (state) => state.totalSum,
+    selectTransactionLoading: (state) => state.fetchTransactionLoading
   },
 });
 
@@ -154,6 +183,8 @@ export const {
   selectSelectedCategories,
   selectCreateTransaction,
   selectTransactions,
+  selectCurrentTransaction,
+  selectTransactionLoading
 } = financeSlice.selectors;
 
 export const {
@@ -164,4 +195,6 @@ export const {
   addTransactionModal,
   closeTransactionModal,
   getSelectedCategories,
+  getCurrentTransaction,
+  changeTotalSum
 } = financeSlice.actions;

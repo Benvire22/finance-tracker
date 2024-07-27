@@ -3,11 +3,19 @@ import React, {useEffect, useState} from 'react';
 import {ApiTransaction, TransactionMutation} from '../../types';
 import {useAppDispatch, useAppSelector} from '../../app/hooks';
 import {
-  closeTransactionModal, getSelectedCategories,
+  closeTransactionModal,
+  getSelectedCategories, selectCreateTransaction,
+  selectCurrentTransaction,
   selectSelectedCategories,
   selectShowModal
 } from '../../store/financeSlice';
-import {addTransaction, fetchCategories, fetchTransaction} from '../../store/financeThunks';
+import {
+  addTransaction,
+  editTransaction,
+  fetchCategories,
+  fetchTransaction
+} from '../../store/financeThunks';
+import ButtonSpinner from '../Spinner/ButtonSpinner';
 
 const initialState: TransactionMutation = {
   category: '',
@@ -20,30 +28,60 @@ const TransactionForm = () => {
   const dispatch = useAppDispatch();
   const isOpenModal = useAppSelector(selectShowModal);
   const categories = useAppSelector(selectSelectedCategories);
+  const currentTransaction = useAppSelector(selectCurrentTransaction);
+  const isCreatingLoading = useAppSelector(selectCreateTransaction);
 
   const close = () => {
     dispatch(closeTransactionModal());
   };
 
   useEffect(() => {
-    dispatch(fetchCategories());
-  }, [dispatch]);
+    try {
+      dispatch(fetchCategories());
+      if (currentTransaction) {
+        setFormData({
+          category: currentTransaction.categoryId,
+          amount: currentTransaction.amount.toString(),
+          type: currentTransaction.type,
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [dispatch, currentTransaction]);
 
   const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const now = new Date();
-    const createdAt = now.toISOString();
+   try {
+     e.preventDefault();
+     if (currentTransaction === null) {
+       const now = new Date();
+       const createdAt = now.toISOString();
 
-    const newTransaction: ApiTransaction = {
-      amount: parseInt(formData.amount),
-      category: formData.category,
-      createdAt,
-    };
+       const newTransaction: ApiTransaction = {
+         amount: parseInt(formData.amount),
+         category: formData.category,
+         createdAt,
+       };
 
-    await dispatch(addTransaction(newTransaction));
-    await dispatch(fetchTransaction());
-    setFormData(initialState);
-    close();
+       await dispatch(addTransaction(newTransaction));
+     } else {
+       const newTransaction: ApiTransaction = {
+         amount: parseInt(formData.amount),
+         category: formData.category,
+         createdAt: currentTransaction.createdAt,
+       };
+
+        await dispatch(editTransaction({
+          transaction: newTransaction,
+          id: currentTransaction.id
+        }));
+     }
+     await dispatch(fetchTransaction());
+     setFormData(initialState);
+     close();
+   } catch (e) {
+     console.error(e);
+   }
   };
 
   const changeForm = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
@@ -119,9 +157,9 @@ const TransactionForm = () => {
                 <button
                   type="submit"
                   className="btn btn-success text-white fs-4 px-5 py-2 mb-3 me-3"
-                  // disabled={isLoading || formData.type === '' || formData.amount === ''}
+                  disabled={isCreatingLoading || formData.type === '' || formData.amount === ''}
                 >
-                  {/*{isLoading && <ButtonSpinner/>}*/}
+                  {isCreatingLoading && <ButtonSpinner/>}
                   save
                 </button>
               </div>

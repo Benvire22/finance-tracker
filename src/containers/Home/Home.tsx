@@ -1,28 +1,42 @@
 import {useAppDispatch, useAppSelector} from '../../app/hooks';
-import {selectTransactions} from '../../store/financeSlice';
+import {
+  addTransactionModal,
+  changeTotalSum,
+  getCurrentTransaction, selectTransactionLoading,
+  selectTransactions
+} from '../../store/financeSlice';
 import {useEffect} from 'react';
 import {fetchCategories, fetchTransaction} from '../../store/financeThunks';
 import dayjs from 'dayjs';
 import {Transaction} from '../../types';
+import Spinner from '../../components/Spinner/Spinner';
 
 const Home = () => {
   const transactions = useAppSelector(selectTransactions);
   const dispatch = useAppDispatch();
+  const fetchLoading = useAppSelector(selectTransactionLoading);
 
   useEffect(() => {
-    void dispatch(fetchTransaction());
-    void dispatch(fetchCategories());
+    try {
+      void dispatch(fetchTransaction());
+      void dispatch(fetchCategories());
+    } catch (e) {
+      console.error(e);
+    }
   }, [dispatch]);
 
   const getTotalSum = () => {
-    return transactions.reduce((acc, trancs) => {
+    const sum = transactions.reduce((acc, trancs) => {
       if (trancs.type === 'income') {
         return acc + trancs.amount;
       } else {
         return acc - trancs.amount;
       }
     },0);
+    dispatch(changeTotalSum(sum));
+    return sum;
   };
+
 
   const getAmount = (transaction: Transaction) => {
       if (transaction.type === 'income') {
@@ -32,8 +46,14 @@ const Home = () => {
       }
   };
 
+  const getCurrent = (transaction: Transaction) => {
+    dispatch(getCurrentTransaction(transaction));
+    dispatch(addTransactionModal());
+  };
+
   return (
     <>
+      {fetchLoading && <Spinner />}
       <div className="row">
         <div className="col-5 text-center border p-5 mb-5">
           <h1 className="p-5">Total: <span className="text-success">{getTotalSum()} KGS</span></h1>
@@ -43,7 +63,7 @@ const Home = () => {
             <span>{dayjs(transaction.createdAt).format('DD.MM.YYYY HH:mm:ss')}</span>
             <strong>{transaction.type}</strong>
             <strong className={transaction.type === 'income' ? 'text-success' : 'text-danger'}>{getAmount(transaction)}</strong>
-            <button className="btn btn-primary fs-5">Edit transaction</button>
+            <button className="btn btn-primary fs-5" onClick={() => getCurrent(transaction)}>Edit transaction</button>
           </div>
         )).reverse()}
       </div>

@@ -5,7 +5,7 @@ import {useAppDispatch, useAppSelector} from '../../app/hooks';
 import {
   clearCurrentCategory,
   closeCategoriesModal,
-  selectCurrentCategory,
+  selectCurrentCategory, selectEditCategoryLoading,
   selectShowCategoriesModal
 } from '../../store/financeSlice';
 import ButtonSpinner from '../Spinner/ButtonSpinner';
@@ -25,6 +25,7 @@ const CategoryForm: React.FC<Props> = ({isLoading}) => {
   const isShowModal = useAppSelector(selectShowCategoriesModal);
   const dispatch = useAppDispatch();
   const currentCategory = useAppSelector(selectCurrentCategory);
+  const editLoading = useAppSelector(selectEditCategoryLoading);
 
   useEffect(() => {
     if (currentCategory) {
@@ -36,22 +37,26 @@ const CategoryForm: React.FC<Props> = ({isLoading}) => {
   }, [currentCategory]);
 
   const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    try {
+      e.preventDefault();
 
-    if (currentCategory === null) {
-      await dispatch(createCategory(formData));
-      await dispatch(fetchCategories());
+      if (currentCategory === null) {
+        await dispatch(createCategory(formData));
+        await dispatch(fetchCategories());
+        dispatch(closeCategoriesModal());
+      } else {
+        await dispatch(editCategory({
+          id: currentCategory.id,
+          category: formData
+        }));
+        await dispatch(fetchCategories());
+      }
+
+      setFormData(initialState);
       dispatch(closeCategoriesModal());
-    } else {
-      await dispatch(editCategory({
-        id: currentCategory.id,
-        category: formData
-      }));
-      await dispatch(fetchCategories());
+    } catch (e) {
+      console.error(e);
     }
-
-    setFormData(initialState);
-    dispatch(closeCategoriesModal());
   };
 
   const changeForm = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
@@ -62,6 +67,7 @@ const CategoryForm: React.FC<Props> = ({isLoading}) => {
     dispatch(closeCategoriesModal());
     dispatch(clearCurrentCategory());
   };
+
   return (
     <>
       <MyModal
@@ -109,7 +115,7 @@ const CategoryForm: React.FC<Props> = ({isLoading}) => {
                     className="btn btn-success text-white fs-4 px-5 py-2 mb-3 me-3"
                     disabled={isLoading || formData.type === ''}
                   >
-                    {isLoading && <ButtonSpinner/>}
+                    {(isLoading || editLoading) && <ButtonSpinner/>}
                     save
                   </button>
                 </div>
