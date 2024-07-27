@@ -1,28 +1,42 @@
 import {createSlice, PayloadAction} from '@reduxjs/toolkit';
 import {Category, Transaction} from '../types';
-import {createCategory, deleteCategory, editCategory, fetchCategories} from './financeThunks';
-
+import {
+  addTransaction,
+  createCategory,
+  deleteCategory,
+  editCategory,
+  fetchCategories,
+  fetchTransaction
+} from './financeThunks';
 
 export interface FinanceState {
   categories: Category[];
   fetchCategoryLoading: boolean;
-  transaction: Transaction[],
+  transactions: Transaction[],
   editCategoryLoading: boolean;
   deleteLoading: boolean,
-  showModal: boolean
+  showCategoryModal: boolean
   createLoading: boolean;
   currentCategory: Category | null;
+  showTransactionModal: boolean;
+  selectedCategories: Category[];
+  createTransactionLoad: boolean;
+  fetchTransactionLoading: boolean;
 }
 
 export const initialState: FinanceState = {
   categories: [],
-  transaction: [],
+  transactions: [],
   currentCategory: null,
   editCategoryLoading: false,
   fetchCategoryLoading: false,
   deleteLoading: false,
-  showModal: false,
-  createLoading: false
+  showCategoryModal: false,
+  createLoading: false,
+  showTransactionModal: false,
+  selectedCategories: [],
+  createTransactionLoad: false,
+  fetchTransactionLoading: false,
 };
 
 export const financeSlice = createSlice({
@@ -30,12 +44,21 @@ export const financeSlice = createSlice({
   initialState,
   reducers: {
     showCategoriesModal: (state) => {
-      state.showModal = true;
+      state.showCategoryModal = true;
     },
 
     closeCategoriesModal: (state) => {
-      state.showModal = false;
+      state.showCategoryModal = false;
       state.currentCategory = null;
+    },
+
+    addTransactionModal: (state) => {
+      state.showTransactionModal = true;
+    },
+
+    closeTransactionModal: (state) => {
+      state.showTransactionModal = false;
+      // state.currentCategory = null;
     },
 
     clearCurrentCategory: (state) => {
@@ -44,7 +67,11 @@ export const financeSlice = createSlice({
 
     getCurrentCategory: (state, {payload: category}: PayloadAction<Category>) => {
       state.currentCategory = category;
-    }
+    },
+
+    getSelectedCategories: (state, {payload: type}: PayloadAction<string>) => {
+      state.selectedCategories = state.categories.filter((category) => category.type === type);
+    },
 
   },
   extraReducers: (builder) => {
@@ -80,15 +107,36 @@ export const financeSlice = createSlice({
     }).addCase(deleteCategory.rejected, (state) => {
       state.deleteLoading = false;
     });
+
+    builder.addCase(addTransaction.pending, (state) => {
+      state.createTransactionLoad = true;
+    }).addCase(addTransaction.fulfilled, (state) => {
+      state.createTransactionLoad = false;
+    }).addCase(addTransaction.rejected, (state) => {
+      state.createTransactionLoad = false;
+    });
+
+    builder.addCase(fetchTransaction.pending, (state) => {
+      state.fetchTransactionLoading = true;
+    }).addCase(fetchTransaction.fulfilled, (state, {payload: transactions}) => {
+      state.fetchTransactionLoading = false;
+      state.transactions = transactions;
+    }).addCase(fetchTransaction.rejected, (state) => {
+      state.fetchTransactionLoading = false;
+    });
   },
   selectors: {
     selectCategories: (state) => state.categories,
-    selectShowCategoriesModal: (state) => state.showModal,
+    selectShowCategoriesModal: (state) => state.showCategoryModal,
     selectCreateLoading: (state) => state.createLoading,
     selectCurrentCategory: (state) => state.currentCategory,
     selectFetchCategoryLoading: (state) => state.fetchCategoryLoading,
     selectEditCategoryLoading: (state) => state.editCategoryLoading,
     selectDeleteLoading: (state) => state.deleteLoading,
+    selectShowModal: (state) => state.showTransactionModal,
+    selectSelectedCategories: (state) => state.selectedCategories,
+    selectCreateTransaction: (state) => state.createTransactionLoad,
+    selectTransactions: (state) => state.transactions,
   },
 });
 
@@ -102,6 +150,10 @@ export const {
   selectCurrentCategory,
   selectEditCategoryLoading,
   selectDeleteLoading,
+  selectShowModal,
+  selectSelectedCategories,
+  selectCreateTransaction,
+  selectTransactions,
 } = financeSlice.selectors;
 
 export const {
@@ -109,4 +161,7 @@ export const {
   closeCategoriesModal,
   clearCurrentCategory,
   getCurrentCategory,
+  addTransactionModal,
+  closeTransactionModal,
+  getSelectedCategories,
 } = financeSlice.actions;

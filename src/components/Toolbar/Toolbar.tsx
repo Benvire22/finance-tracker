@@ -1,6 +1,10 @@
 import { NavLink} from 'react-router-dom';
+import {useAppDispatch} from '../../app/hooks';
+import {addTransactionModal} from '../../store/financeSlice';
 
 const Toolbar = () => {
+  const dispatch = useAppDispatch();
+
   return (
     <nav className="navbar py-3 navbar-expand-lg bg-primary" data-bs-theme="dark">
       <div className="container-xl">
@@ -18,7 +22,7 @@ const Toolbar = () => {
               <NavLink to="/categories" className="nav-link" aria-current="page">Categories</NavLink>
             </li>
             <li className="nav-item">
-              <button className="nav-link">Add</button>
+              <button className="nav-link" onClick={() => dispatch(addTransactionModal())}>Add</button>
             </li>
           </ul>
         </div>

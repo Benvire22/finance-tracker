@@ -15,13 +15,11 @@ const MyModal: React.FC<Props> = ({isOpen, onClose, children}) => {
       keyboard={true}
     >
       <Modal.Header closeButton>
-        <Modal.Title>Category</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         {children}
       </Modal.Body>
       <Modal.Footer>
-        {/*disabled={isComplete || cartDishes.length < 1}*/}
         <Button variant="danger" onClick={onClose}>
           Close
         </Button>

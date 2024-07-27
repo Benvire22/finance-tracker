@@ -21,10 +21,10 @@ interface Props {
 }
 
 const CategoryForm: React.FC<Props> = ({isLoading}) => {
+  const [formData, setFormData] = useState(initialState);
   const isShowModal = useAppSelector(selectShowCategoriesModal);
   const dispatch = useAppDispatch();
   const currentCategory = useAppSelector(selectCurrentCategory);
-  const [formData, setFormData] = useState(initialState);
 
   useEffect(() => {
     if (currentCategory) {
