@@ -41,14 +41,17 @@ const Categories = () => {
         </button>
       </div>
       <div className="row justify-content-center my-5">
-        {categories.map((category) => (
-          <CategoryItems
-            key={category.id}
-            category={category}
-            onDelete={() => onDelete(category.id)}
-            onEdit={() => onEdit(category)}
-          />
-        ))}
+        {categories.length > 0
+          ? (categories.map((category) => (
+            <CategoryItems
+              key={category.id}
+              category={category}
+              onDelete={() => onDelete(category.id)}
+              onEdit={() => onEdit(category)}
+            />
+          ))) : (
+            <h2 className="text-center text-secondary">Empty...</h2>
+          )}
       </div>
       <CategoryForm isLoading={onCreating}/>
     </>
