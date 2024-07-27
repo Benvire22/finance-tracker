@@ -1,12 +1,14 @@
-import {createSlice} from '@reduxjs/toolkit';
+import {createSlice, PayloadAction} from '@reduxjs/toolkit';
 import {Category, Transaction} from '../types';
-import {createCategory, fetchCategories} from './financeThunks';
+import {createCategory, deleteCategory, editCategory, fetchCategories} from './financeThunks';
 
 
 export interface FinanceState {
   categories: Category[];
   fetchCategoryLoading: boolean;
   transaction: Transaction[],
+  editCategoryLoading: boolean;
+  deleteLoading: boolean,
   showModal: boolean
   createLoading: boolean;
   currentCategory: Category | null;
@@ -16,7 +18,9 @@ export const initialState: FinanceState = {
   categories: [],
   transaction: [],
   currentCategory: null,
+  editCategoryLoading: false,
   fetchCategoryLoading: false,
+  deleteLoading: false,
   showModal: false,
   createLoading: false
 };
@@ -31,7 +35,17 @@ export const financeSlice = createSlice({
 
     closeCategoriesModal: (state) => {
       state.showModal = false;
+      state.currentCategory = null;
+    },
+
+    clearCurrentCategory: (state) => {
+      state.currentCategory = null;
+    },
+
+    getCurrentCategory: (state, {payload: category}: PayloadAction<Category>) => {
+      state.currentCategory = category;
     }
+
   },
   extraReducers: (builder) => {
     builder.addCase(createCategory.pending, (state) => {
@@ -50,6 +64,22 @@ export const financeSlice = createSlice({
     }).addCase(fetchCategories.rejected, (state) => {
       state.fetchCategoryLoading = false;
     });
+
+    builder.addCase(editCategory.pending, (state) => {
+      state.editCategoryLoading = true;
+    }).addCase(editCategory.fulfilled, (state) => {
+      state.editCategoryLoading = false;
+    }).addCase(editCategory.rejected, (state) => {
+      state.editCategoryLoading = false;
+    });
+
+    builder.addCase(deleteCategory.pending, (state) => {
+      state.deleteLoading = true;
+    }).addCase(deleteCategory.fulfilled, (state) => {
+      state.deleteLoading = false;
+    }).addCase(deleteCategory.rejected, (state) => {
+      state.deleteLoading = false;
+    });
   },
   selectors: {
     selectCategories: (state) => state.categories,
@@ -57,6 +87,8 @@ export const financeSlice = createSlice({
     selectCreateLoading: (state) => state.createLoading,
     selectCurrentCategory: (state) => state.currentCategory,
     selectFetchCategoryLoading: (state) => state.fetchCategoryLoading,
+    selectEditCategoryLoading: (state) => state.editCategoryLoading,
+    selectDeleteLoading: (state) => state.deleteLoading,
   },
 });
 
@@ -68,9 +100,13 @@ export const {
   selectFetchCategoryLoading,
   selectCategories,
   selectCurrentCategory,
+  selectEditCategoryLoading,
+  selectDeleteLoading,
 } = financeSlice.selectors;
 
 export const {
   showCategoriesModal,
   closeCategoriesModal,
+  clearCurrentCategory,
+  getCurrentCategory,
 } = financeSlice.actions;

@@ -1,10 +1,15 @@
 import {ApiCategory} from '../../types';
-import React, {useState} from 'react';
-import {useParams} from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
 import MyModal from '../MyModal/MyModal';
 import {useAppDispatch, useAppSelector} from '../../app/hooks';
-import {closeCategoriesModal, selectShowCategoriesModal} from '../../store/financeSlice';
+import {
+  clearCurrentCategory,
+  closeCategoriesModal,
+  selectCurrentCategory,
+  selectShowCategoriesModal
+} from '../../store/financeSlice';
 import ButtonSpinner from '../Spinner/ButtonSpinner';
+import {createCategory, editCategory, fetchCategories} from '../../store/financeThunks';
 
 const initialState: ApiCategory = {
   name: '',
@@ -12,31 +17,50 @@ const initialState: ApiCategory = {
 };
 
 interface Props {
-  onSubmit: (category: ApiCategory) => void;
   isLoading: boolean,
 }
 
-const CategoryForm: React.FC<Props> = ({onSubmit, isLoading}) => {
+const CategoryForm: React.FC<Props> = ({isLoading}) => {
   const isShowModal = useAppSelector(selectShowCategoriesModal);
   const dispatch = useAppDispatch();
-
-
+  const currentCategory = useAppSelector(selectCurrentCategory);
   const [formData, setFormData] = useState(initialState);
-  const {id} = useParams();
+
+  useEffect(() => {
+    if (currentCategory) {
+      setFormData({
+        type: currentCategory.type,
+        name: currentCategory.name,
+      });
+    }
+  }, [currentCategory]);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (currentCategory === null) {
+      await dispatch(createCategory(formData));
+      await dispatch(fetchCategories());
+      dispatch(closeCategoriesModal());
+    } else {
+      await dispatch(editCategory({
+        id: currentCategory.id,
+        category: formData
+      }));
+      await dispatch(fetchCategories());
+    }
+
+    setFormData(initialState);
+    dispatch(closeCategoriesModal());
+  };
 
   const changeForm = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     setFormData({...formData, [e.target.name]: e.target.value});
   };
 
-  const sendForm = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    onSubmit(formData);
-    setFormData(initialState);
-  };
-
   const close = () => {
     dispatch(closeCategoriesModal());
+    dispatch(clearCurrentCategory());
   };
   return (
     <>
@@ -45,10 +69,10 @@ const CategoryForm: React.FC<Props> = ({onSubmit, isLoading}) => {
         onClose={close}
       >
         <div className="row px-5 fs-6">
-          <h3 className="text-primary-emphasis text-center fs-1 mb-5">{id ? 'Edit' : 'Add'} Category</h3>
+          <h3 className="text-primary-emphasis text-center fs-1 mb-5">{currentCategory ? 'Edit' : 'Add'} Category</h3>
           <div className="row mt-2 justify-content-center">
             <div className=" text-primary-emphasis">
-              <form onSubmit={sendForm}>
+              <form onSubmit={onSubmit}>
                 <div className="form-group mb-3">
                   <label htmlFor="name" className="fs-4 mb-2">Category Name</label>
                   <input

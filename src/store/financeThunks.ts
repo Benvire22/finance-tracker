@@ -24,3 +24,23 @@ export const fetchCategories = createAsyncThunk<Category[], void, {state: RootSt
     }));
   },
 );
+
+
+export interface EditCategoryArg {
+  id: string;
+  category: ApiCategory;
+}
+
+export const editCategory = createAsyncThunk<void, EditCategoryArg, {state: RootState}>(
+  'finance/editCategory',
+  async ({id, category}) => {
+    await axiosApi.put(`/categories/${id}.json`, category);
+  }
+);
+
+export const deleteCategory = createAsyncThunk<void, string, {state: RootState}>(
+  'finance/deleteCategory',
+  async (id) => {
+    await axiosApi.delete(`/categories/${id}.json`);
+  },
+);
